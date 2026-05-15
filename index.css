@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #1B5E20;
+  --color-accent-student: #FFA000;
+  --color-accent-teacher: #1565C0;
+  --color-success: #4CAF50;
+  --color-error: #F44336;
+  --color-bg-base: #F9F9F9;
+  --color-card: #FFFFFF;
+  --color-border: #E0E0E0;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-base text-[#333] font-sans;
+  }
+}
+
+.markdown-body {
+  @apply text-sm leading-relaxed;
+}
+
+/* Custom scrollbar for better mobile-first feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}

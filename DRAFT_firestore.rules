@@ -1,0 +1,91 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Primitives ---
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // --- Entity Validations ---
+
+    function isValidTeacher(data) {
+      return data.keys().hasAll(['name']) 
+          && data.name is string && data.name.size() <= 100
+          && (!data.keys().hasAll(['batches']) || data.batches is list);
+    }
+
+    function isValidBatch(data) {
+      return data.keys().hasAll(['createdAt', 'teacherId'])
+          && data.teacherId is string && data.teacherId.size() <= 128
+          && data.createdAt is int;
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['name', 'batchCode', 'joinedAt', 'lastActive', 'streak', 'lastActivityDate'])
+          && data.name is string && data.name.size() <= 100
+          && data.batchCode is string && data.batchCode.size() <= 64
+          && data.joinedAt is int
+          && data.lastActive is int
+          && data.streak is int
+          && data.lastActivityDate is string;
+    }
+
+    function isValidProgress(data) {
+      // Allow any activity key to be a boolean
+      return data.keys().size() <= 10; // Simple bound
+    }
+
+    // --- Rules ---
+
+    // Teacher rules
+    match /teachers/{teacherCode} {
+      allow get: if isValidId(teacherCode);
+      allow create: if isValidId(teacherCode) && isValidTeacher(incoming());
+      allow update: if isValidId(teacherCode) 
+                   && isValidTeacher(incoming())
+                   && incoming().diff(existing()).affectedKeys().hasOnly(['batches', 'name']);
+    }
+
+    // Batch rules
+    match /batches/{batchCode} {
+      allow get: if isValidId(batchCode);
+      allow create: if isValidId(batchCode) && isValidBatch(incoming());
+      // Teachers can update their own batches if they were to add more fields later
+      allow update: if isValidId(batchCode) && isValidBatch(incoming());
+      
+      // Students within a batch
+      match /students/{studentId} {
+        // Fix: Use read (get + list) to allow onSnapshot/getDocs on the collection
+        allow read: if isValidId(studentId);
+        
+        allow create: if isValidId(studentId) && isValidStudent(incoming());
+        allow update: if isValidId(studentId) 
+                     && isValidStudent(incoming())
+                     && incoming().diff(existing()).affectedKeys().hasAny(['lastActive', 'streak', 'lastActivityDate']);
+        
+        // Progress within a student
+        match /progress/{chapterId} {
+          // Fix: Use read to allow listing progress
+          allow read: if isValidId(chapterId);
+          allow write: if isValidId(chapterId) && isValidProgress(incoming());
+        }
+      }
+    }
+    
+    // Connection test doc
+    match /test/connection {
+      allow get: if true;
+    }
+  }
+}

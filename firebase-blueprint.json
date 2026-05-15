@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "Batch": {
+      "title": "Batch",
+      "description": "A group of students managed by a teacher.",
+      "type": "object",
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "teacherId": { "type": "string" }
+      },
+      "required": ["createdAt"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "A learner within a batch.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "joinedAt", "lastActive"]
+    },
+    "Progress": {
+      "title": "Chapter Progress",
+      "description": "Completion status of activities within a chapter.",
+      "type": "object",
+      "properties": {
+        "act1": { "type": "boolean" },
+        "act2": { "type": "boolean" },
+        "act3": { "type": "boolean" },
+        "act4": { "type": "boolean" },
+        "act5": { "type": "boolean" }
+      }
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "A teacher who manages multiple batches.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "batches": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/batches/{batchCode}": {
+      "schema": "Batch",
+      "description": "Collection of learning batches."
+    },
+    "/batches/{batchCode}/students/{studentId}": {
+      "schema": "Student",
+      "description": "Students within a batch."
+    },
+    "/batches/{batchCode}/students/{studentId}/progress/{chapterId}": {
+      "schema": "Progress",
+      "description": "Activity completion for a specific chapter."
+    },
+    "/teachers/{teacherCode}": {
+      "schema": "Teacher",
+      "description": "Registered teachers."
+    }
+  }
+}
